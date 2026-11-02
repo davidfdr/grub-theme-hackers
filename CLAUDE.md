@@ -5,6 +5,8 @@
 Notes for Claude Code specifically:
 
 - Start with `AGENTS.md` above; it is the source of truth for structure, commands and rules.
+- Run `./check.sh` before suggesting an install and `./check.sh --update` before every commit;
+  it is the only test gate (GitHub Actions is disabled on purpose). Do not add a workflow.
 - Before committing a design change, run `python3 build.py --all --preview` and look at
   `previews/preview-2560x1600.png` and `previews/preview-1920x1080.png` (use the Read tool on
   the PNG) to check the layout visually. The preview is a simulation of GRUB's rendering;

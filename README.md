@@ -66,8 +66,15 @@ automatically when Pillow and `grub-mkfont` are available).
 ```bash
 git clone https://github.com/davidfdr/grub-theme-hackers.git
 cd grub-theme-hackers
-sudo ./install.sh
+./check.sh          # validate the files you just cloned (no root, ~15 s)
+sudo ./install.sh   # install for your screen
 ```
+
+Run `./check.sh` first, always. It verifies the tools, the scripts, every
+prebuilt theme in `dist/` (files, image sizes, font names), rebuilds all
+resolutions in a temporary folder when Pillow and `grub-mkfont` are available,
+and dry-runs the installer. It changes nothing on your system; a failing
+check means "do not install yet". `./check.sh --quick` skips the rebuild.
 
 The installer detects the panel resolution from `/sys/class/drm`, copies the
 matching theme to `/boot/grub/themes/hackers` (or `/boot/grub2/...`), sets
@@ -169,7 +176,8 @@ position is a fraction of the screen and every size is multiplied by
 `height / 1600`, so the look is identical on a 768p netbook and a 4K monitor.
 
 See [AGENTS.md](AGENTS.md) for the repository map, commands and rules if you
-want to change or extend it.
+want to change or extend it. There is no hosted CI: `./check.sh --update`
+is the gate before every commit.
 
 ## Credits and licenses
 

@@ -24,7 +24,7 @@ position is a fraction of the screen and every size is scaled by screen height
 | `fonts/` | Vendored fonts: 0xProto Regular/Bold and Michroma, both SIL OFL 1.1, with their license files. Do not add fonts without a redistributable license file next to them. |
 | `dist/<WxH>/` | Prebuilt theme for each common resolution: `theme.txt`, `background.png`, `select_*.png` (9-slice), `icons/*.png`, `menu.pf2`, `small.pf2`. Generated; never hand-edit. |
 | `previews/` | 1280px-wide simulated renders used by the README. Generated with `--preview`. |
-| `.github/workflows/build.yml` | CI: builds every resolution, sanity-checks output, dry-runs the installer. |
+| `check.sh` | The validation gate (no hosted CI). Checks tools, syntax, every `dist/<WxH>` (required files, PNG size equals the directory name, font names in `theme.txt` exist in the `.pf2` files), rebuilds all resolutions in a temp dir, dry-runs the installer. `--quick` skips the rebuild, `--update` regenerates `dist/` and `previews/` in place first. Users run it before installing; contributors before committing. |
 
 ## Commands
 
@@ -42,8 +42,9 @@ python3 build.py --all --preview
 sudo ./install.sh --timeout 5 --hide-memtest
 sudo ./uninstall.sh
 
-# quick checks before a commit
-python3 -m py_compile build.py && bash -n install.sh uninstall.sh
+# THE gate: run before installing and before every commit
+./check.sh            # validate as a user would (tools, syntax, dist/, fresh build, dry-run)
+./check.sh --update   # contributors: regenerate dist/ + previews/ in place, then validate
 ```
 
 Dependencies: `python3-pil` (Pillow) and `grub-mkfont` (package `grub-common`
@@ -64,9 +65,11 @@ on Debian/Ubuntu, `grub2-tools` on Fedora, `grub` on Arch).
    tribute.
 5. `install.sh` must stay safe: back up `/etc/default/grub`, tag every line it
    writes with `# managed by grub-theme-hackers`, never remove unrelated
-   settings, and keep `--dry-run` accurate. Test it with `--dry-run` on every
-   change; CI runs that too.
-6. Never run `install.sh` for real in CI or in a container; GRUB is host state.
+   settings, and keep `--dry-run` accurate. `check.sh` dry-runs it on every
+   run; keep that passing.
+6. Never run `install.sh` for real from `check.sh`, automation or a container;
+   GRUB is host state. There is deliberately no hosted CI (GitHub Actions is
+   disabled on the repository); `check.sh` replaces it.
 7. `theme.txt` is written by `theme_txt()` in `build.py`; edit the template
    there, not the generated files.
 8. Fonts: PF2 files come from `grub-mkfont` at build time with the name
@@ -90,13 +93,13 @@ on Debian/Ubuntu, `grub2-tools` on Fedora, `grub` on Arch).
 
 ## Adding a resolution
 
-Add it to `COMMON_RESOLUTIONS` in `build.py`, run `python3 build.py --all
---preview`, add a row to the README table, commit `dist/<WxH>/` and
-`previews/preview-<WxH>.png`.
+Add it to `COMMON_RESOLUTIONS` in `build.py`, run `./check.sh --update`, add a
+row to the README table, commit `dist/<WxH>/` and `previews/preview-<WxH>.png`.
 
 ## PR checklist
 
-- [ ] `python3 -m py_compile build.py && bash -n install.sh uninstall.sh`
-- [ ] `python3 build.py --all --preview` run and outputs committed
-- [ ] `./install.sh --dry-run` output still sensible
+- [ ] `./check.sh --update` passes with 0 failures (it compiles, builds all
+      resolutions, validates `dist/`, dry-runs the installer)
+- [ ] regenerated `dist/` and `previews/` are committed with the code change
 - [ ] README table and flags documentation match the code
+- [ ] commit is GPG-signed
